@@ -50,6 +50,24 @@ def get_stock(symbol="2330"):
             pass
         return "📈 股市服務待設定"
 
+def get_top50():
+    try:
+        top_stocks = ["2330", "2317", "2303", "2454", "2412", "2885", "2891", "2884", "2883", "2002", "1216", "3008", "2382", "3034", "3673", "6515", "00679B", "0050", "00878", "00940", "2618", "2409", "3481", "2337", "0056", "2474", "2327", "2362", "2308", "2377", "1590", "6703", "3231", "4906", "2405", "6223", "3545", "1805", "1707", "1711", "2481", "2449", "2328", "2105", "1710", "2363", "2027", "4958", "2347", "6285", "8155", "8299"]
+        url = "https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=" + "|".join([f"tse_{s}.tw" for s in top_stocks]) + "&json=1&delay=0"
+        r = requests.get(url).json()
+        stocks = r.get("msgArray", [])
+        if not stocks:
+            return "📈 無法取得熱門股票資料"
+        result = "📈 台灣熱門股票 Top 20\n\n"
+        for i, s in enumerate(stocks[:20], 1):
+            price = s.get('z', s.get('p', 'N/A'))
+            if price == '-':
+                price = s.get('p', 'N/A')
+            result += f"{i}. {s.get('c', '')} {s.get('n', '')} - {price}\n"
+        return result
+    except Exception as e:
+        return "📈 服務異常，請稍後再試"
+
 def get_updates(offset):
     return requests.get(f"{API_URL}/getUpdates", params={"offset": offset}).json()
 
@@ -77,6 +95,8 @@ while True:
                         match = re.search(r'(\d{4,6})', text)
                         symbol = match.group(1) if match else "2330"
                         send_message(chat_id, get_stock(symbol))
+                    elif "熱門" in text or "TOP" in text.upper():
+                        send_message(chat_id, get_top50())
                     else:
                         send_message(chat_id, "📋 可用指令：\n• 天氣 - 查詢天氣\n• 新聞 - 查詢新聞\n• 股市 - 查詢台積電")
         time.sleep(1)
