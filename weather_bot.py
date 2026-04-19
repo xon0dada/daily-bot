@@ -73,7 +73,10 @@ while True:
                     elif "新聞" in text:
                         send_message(chat_id, get_news())
                     elif "股市" in text or "股票" in text:
-                        send_message(chat_id, get_stock())
+                        import re
+                        match = re.search(r'(\d{4,6})', text)
+                        symbol = match.group(1) if match else "2330"
+                        send_message(chat_id, get_stock(symbol))
                     else:
                         send_message(chat_id, "📋 可用指令：\n• 天氣 - 查詢天氣\n• 新聞 - 查詢新聞\n• 股市 - 查詢台積電")
         time.sleep(1)
