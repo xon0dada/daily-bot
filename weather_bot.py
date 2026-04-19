@@ -38,6 +38,8 @@ while True:
                         send_message(chat_id, stock.get_stock(symbol))
                     elif "熱門" in text or "TOP" in text.upper():
                         send_message(chat_id, stock.get_top50())
+                    elif "股市新聞" in text or "股 news" in text.lower():
+                        send_message(chat_id, stock.get_stock_news())
                     else:
                         send_message(chat_id, "📋 可用指令：\n• 天氣 - 查詢天氣\n• 新聞 - 查詢新聞\n• 股市 - 查詢台積電\n• 股市 2330 - 查詢個股\n• 熱門 - 熱門股票")
         time.sleep(1)
