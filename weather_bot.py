@@ -29,17 +29,25 @@ def get_news():
 
 def get_stock(symbol="2330"):
     try:
-        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}.TW"
+        url = f"https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date=&stockNo={symbol}"
         headers = {"User-Agent": "Mozilla/5.0"}
         r = requests.get(url, headers=headers).json()
-        result = r.get("chart", {}).get("result", [])
-        if result:
-            meta = result[0].get("meta", {})
-            price = meta.get("regularMarketPrice", "N/A")
-            name = meta.get("symbol", symbol)
-            return f"📈 {name} 台積電\n目前價格: {price} TWD"
+        data = r.get("data", [])
+        if data:
+            latest = data[-1]
+            name = r.get("title", symbol)
+            date, cap, turn, open_price, high, low, close, change, vol = latest
+            return f"📈 {name}\n收盤: {close}\n漲跌: {change}\n成交量: {vol}"
         return f"📈 {symbol} 無法取得資料"
     except:
+        try:
+            url = f"https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_{symbol}.tw&json=1&delay=0"
+            r = requests.get(url).json()
+            if r.get("msgArray"):
+                info = r["msgArray"][0]
+                return f"📈 {info.get('n', symbol)} {info.get('c', '')}\n目前: {info.get('p', 'N/A')} TWD"
+        except:
+            pass
         return "📈 股市服務待設定"
 
 def get_updates(offset):
