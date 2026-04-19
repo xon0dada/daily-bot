@@ -15,7 +15,7 @@ def get_weather(lat=25.0330, lon=121.5654):
 
 def get_news():
     try:
-        url = "https://newsapi.org/v2/top-headlines?country=tw&apiKey=demo"
+        url = "https://newsapi.org/v2/top-headlines?country=tw&apiKey=48b077995ba8419f8f4da5256744b3fd"
         r = requests.get(url).json()
         articles = r.get("articles", [])[:5]
         if not articles:
