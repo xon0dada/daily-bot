@@ -32,12 +32,16 @@ def get_ai_response(prompt, user_id):
     
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
     
-    full_prompt = f"""你是友善的台灣生活助手，用輕鬆自然的繁對話。
+    full_prompt = f"""你是我的好朋友，我們在LINE上面聊天用。
 
+我們的對話紀錄：
 {context}
-User: {prompt}
 
-用自然對話回答。投資問題提醒只是參考。
+對方說：{prompt}
+
+請用輕鬆、自然、口語化的方式回覆，就像朋友聊天一樣。可以使用表情符號，但不要用列表或編號。盡量簡短一點，像真的在聊天。
+
+如果聊到投資股票相關，要記得說「這只是參考喔，投資有風險，進場要小心～」
 """
     
     payload = {"contents": [{"parts": [{"text": full_prompt}]}]}
@@ -62,7 +66,7 @@ User: {prompt}
     except:
         pass
     
-    return "讓我、組織一下語言..."
+    return "👀 讓我想想..."
 
 def get_updates(offset):
     return requests.get(f"{API_URL}/getUpdates", params={"offset": offset}).json()
