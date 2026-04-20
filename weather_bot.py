@@ -191,20 +191,33 @@ while True:
                         match = re.search(r'(\d+)', text)
                         if match:
                             amount = int(match.group(1))
-                            # 嘗試找分類
-                            cats = ["餐飲", "交通", "購物", "娛樂", "醫療", "房租", "投資", "其他"]
-                            category = "其他"
+                            # 預設分類
+                            category = "📦 其他"
+                            
+                            # 嘗試找分類關鍵字
+                            cats = ["餐飲", "交通", "購物", "娛樂", "醫療", "房租", "投資", "電話", "電費", "3C", "服飾", "禮物", "旅遊", "學習", "寵物"]
+                            cat_emojis = {
+                                "餐飲": "🍔 餐飲", "交通": "🚗 交通", "購物": "🛒 購物", 
+                                "娛樂": "🎬 娛樂", "醫療": "🏥 醫療", "房租": "🏠 房租", 
+                                "投資": "💰 投資", "電話": "📱 電話", "電費": "💡 電費",
+                                "3C": "💻 3C", "服飾": "👕 服飾", "禮物": "🎁 禮物",
+                                "旅遊": "✈️ 旅遊", "學習": "📚 學習", "寵物": "🐱 寵物"
+                            }
+                            
                             for cat in cats:
                                 if cat in text:
-                                    category = cat
+                                    category = cat_emojis.get(cat, f"📦 {cat}")
+                                    text = text.replace(cat, "")
                                     break
-                            note = text
-                            for cat in cats:
-                                note = note.replace(cat, "")
-                            note = re.sub(r'\d+', '', note).replace("支出", "").replace("-", "").strip()
+                            
+                            # 移除數字和其他關鍵字
+                            note = re.sub(r'\d+', '', text).replace("支出", "").replace("-", "").strip()
+                            if not note:
+                                note = "-"
+                            
                             send_message(chat_id, ledger.add_expense(amount, category, note))
                         else:
-                            send_message(chat_id, "📝 格式：支出 300 餐飲")
+                            send_message(chat_id, "📝 格式：支出 300 餐飲\n或：支出 300")
                     
                     elif "餘額" in text or "帳本" in text:
                         send_message(chat_id, ledger.get_balance())
@@ -214,6 +227,9 @@ while True:
                     
                     elif "清除" in text:
                         send_message(chat_id, ledger.clear_records())
+                    
+                    elif "分類" in text:
+                        send_message(chat_id, ledger.get_categories())
                     
                     # AI 對話
                     else:

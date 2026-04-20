@@ -7,15 +7,21 @@ import json
 import os
 from datetime import datetime
 
-# 存檔位置
 DATA_FILE = "ledger.json"
+
+CATEGORIES = [
+    "🍔 餐飲", "🚗 交通", "🛒 購物", "🎬 娛樂", 
+    "🏥 醫療", "🏠 房租", "💰 投資", "📱 電話",
+    "💡 電費", "💻 3C", "👕 服飾", "🎁 禮物",
+    "✈️ 旅遊", "📚 學習", "🐱 寵物", "📦 其他"
+]
 
 def load_data():
     """載入記錄"""
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE, "r") as f:
             return json.load(f)
-    return {"income": [], "expense": [], " balance": 0}
+    return {"income": [], "expense": [], "balance": 0}
 
 def save_data(data):
     """儲存記錄"""
@@ -63,22 +69,27 @@ def get_records(limit=10):
     
     result = "📝 最近記錄\n\n"
     
-    # 最近的收入
-    for r in data["income"][-limit:]:
-        result += f"💰 {r['date']} +{r['amount']} 元\n"
-        if r.get("note"):
-            result += f"   📝 {r['note']}\n"
+    all_records = []
+    for r in data["income"]:
+        all_records.append({"type": "income", "date": r["date"], "amount": r["amount"], "note": r.get("note", "")})
+    for r in data["expense"]:
+        all_records.append({"type": "expense", "date": r["date"], "amount": r["amount"], "category": r.get("category", ""), "note": r.get("note", "")})
     
-    # 最近的支出
-    for r in data["expense"][-limit:]:
-        result += f"💸 {r['date']} -{r['amount']} 元"
-        if r.get("category"):
-            result += f" ({r['category']})"
-        result += "\n"
-        if r.get("note"):
-            result += f"   📝 {r['note']}\n"
+    all_records.sort(key=lambda x: x["date"], reverse=True)
     
-    if not data["income"] and not data["expense"]:
+    for r in all_records[:limit]:
+        if r["type"] == "income":
+            result += f"💰 {r['date'][-5:]} +{r['amount']} 元"
+            if r.get("note"):
+                result += f" ({r['note']})"
+            result += "\n"
+        else:
+            result += f"💸 {r['date'][-5:]} -{r['amount']} 元"
+            if r.get("category"):
+                result += f" {r['category']}"
+            result += "\n"
+    
+    if not all_records:
         result += "還沒有記錄～"
     
     return result
@@ -93,16 +104,20 @@ def get_summary():
     """收支摘要"""
     data = load_data()
     
-    # 按分類統計支出
     expense_by_cat = {}
     for r in data["expense"]:
-        cat = r.get("category", "其他")
+        cat = r.get("category", "📦 其他")
         expense_by_cat[cat] = expense_by_cat.get(cat, 0) + r["amount"]
     
     result = "📊 支出分類\n\n"
     for cat, amount in sorted(expense_by_cat.items(), key=lambda x: -x[1]):
         result += f"{cat}: {amount} 元\n"
     
-    result += f"\n💵 總支出：{sum(r['amount'] for r in data['expense'])} 元"
+    total = sum(r["amount"] for r in data["expense"])
+    result += f"\n💵 總支出：{total} 元"
     
     return result
+
+def get_categories():
+    """取得分類列表"""
+    return "📂 可用分類：\n\n" + "\n".join(CATEGORIES)
