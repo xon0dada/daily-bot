@@ -74,7 +74,7 @@ def handle(chat_id, text, user_id):
     elif "收入" in text and re.search(r'\d+', text):
         m = re.search(r'(\d+)', text)
         note = re.sub(r'\d+', '', text.replace("收入", "")).strip()
-        send(chat_id, ledger.add_income(int(m.group(1)), note if note else "-")
+        send(chat_id, ledger.add_income(int(m.group(1)), note if note else "-"))
     
     elif "支出" in text and re.search(r'\d+', text):
         m = re.search(r'(\d+)', text)
