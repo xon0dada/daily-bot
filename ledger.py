@@ -1,123 +1,66 @@
 """
-記帳模組 - 收支記錄
+Daily Bot - 記帳模組
 """
 
-import requests
 import json
 import os
 from datetime import datetime
 
 DATA_FILE = "ledger.json"
 
-CATEGORIES = [
-    "🍔 餐飲", "🚗 交通", "🛒 購物", "🎬 娛樂", 
-    "🏥 醫療", "🏠 房租", "💰 投資", "📱 電話",
-    "💡 電費", "💻 3C", "👕 服飾", "🎁 禮物",
-    "✈️ 旅遊", "📚 學習", "🐱 寵物", "📦 其他"
-]
+CATEGORIES = ["🍔 餐飲", "🚗 交通", "🛒 購物", "🎬 娛樂", "🏥 醫療", "🏠 房租", "💰 投資", "📱 電話", "💡 電費", "💻 3C", "👕 服飾", "✈️ 旅遊", "📚 學習", "🐱 寵物", "📦 其他"]
 
 def load_data():
-    """載入記錄"""
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE, "r") as f:
             return json.load(f)
     return {"income": [], "expense": [], "balance": 0}
 
 def save_data(data):
-    """儲存記錄"""
     with open(DATA_FILE, "w") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 def add_income(amount, note=""):
-    """記錄收入"""
     data = load_data()
-    record = {
-        "date": datetime.now().strftime("%Y-%m-%d %H:%M"),
-        "amount": amount,
-        "note": note
-    }
+    record = {"date": datetime.now().strftime("%Y-%m-%d %H:%M"), "amount": amount, "note": note}
     data["income"].append(record)
     data["balance"] += amount
     save_data(data)
-    return f"💰 記錄收入：+{amount} 元\n備註：{note}\n餘額：{data['balance']} 元"
+    return f"💰 收入 +{amount} 元\n餘額: {data['balance']} 元"
 
-def add_expense(amount, category="", note=""):
-    """記錄支出"""
+def add_expense(amount, category="📦 其他", note="-"):
     data = load_data()
-    record = {
-        "date": datetime.now().strftime("%Y-%m-%d %H:%M"),
-        "amount": amount,
-        "category": category,
-        "note": note
-    }
+    record = {"date": datetime.now().strftime("%Y-%m-%d %H:%M"), "amount": amount, "category": category, "note": note}
     data["expense"].append(record)
     data["balance"] -= amount
     save_data(data)
-    return f"💸 記錄支出：-{amount} 元\n分類：{category}\n備註：{note}\n餘額：{data['balance']} 元"
+    return f"💸 支出 -{amount} 元 ({category})\n餘額: {data['balance']} 元"
 
 def get_balance():
-    """查看餘額"""
     data = load_data()
     income = sum(r["amount"] for r in data["income"])
     expense = sum(r["amount"] for r in data["expense"])
-    
-    return f"💵 目前餘額\n\n收入：+{income} 元\n支出：-{expense} 元\n────────\n餘額：{data['balance']} 元"
+    return f"💵 餘額\n\n收入: +{income} 元\n支出: -{expense} 元\n─────────\n餘額: {data['balance']} 元"
 
 def get_records(limit=10):
-    """查看記錄"""
     data = load_data()
-    
-    result = "📝 最近記錄\n\n"
-    
     all_records = []
     for r in data["income"]:
-        all_records.append({"type": "income", "date": r["date"], "amount": r["amount"], "note": r.get("note", "")})
+        all_records.append({"type": "💰", "date": r["date"][-5:], "amount": r["amount"], "note": r.get("note", "")})
     for r in data["expense"]:
-        all_records.append({"type": "expense", "date": r["date"], "amount": r["amount"], "category": r.get("category", ""), "note": r.get("note", "")})
-    
+        all_records.append({"type": "💸", "date": r["date"][-5:], "amount": r["amount"], "category": r.get("category", "")})
     all_records.sort(key=lambda x: x["date"], reverse=True)
-    
+    result = "📝 記錄\n\n"
     for r in all_records[:limit]:
-        if r["type"] == "income":
-            result += f"💰 {r['date'][-5:]} +{r['amount']} 元"
-            if r.get("note"):
-                result += f" ({r['note']})"
-            result += "\n"
-        else:
-            result += f"💸 {r['date'][-5:]} -{r['amount']} 元"
-            if r.get("category"):
-                result += f" {r['category']}"
-            result += "\n"
-    
-    if not all_records:
-        result += "還沒有記錄～"
-    
-    return result
-
-def clear_records():
-    """清除所有記錄"""
-    data = {"income": [], "expense": [], "balance": 0}
-    save_data(data)
-    return "🗑️ 已清除所有記錄"
-
-def get_summary():
-    """收支摘要"""
-    data = load_data()
-    
-    expense_by_cat = {}
-    for r in data["expense"]:
-        cat = r.get("category", "📦 其他")
-        expense_by_cat[cat] = expense_by_cat.get(cat, 0) + r["amount"]
-    
-    result = "📊 支出分類\n\n"
-    for cat, amount in sorted(expense_by_cat.items(), key=lambda x: -x[1]):
-        result += f"{cat}: {amount} 元\n"
-    
-    total = sum(r["amount"] for r in data["expense"])
-    result += f"\n💵 總支出：{total} 元"
-    
-    return result
+        result += f"{r['type']} {r['date']} {r['amount']} 元"
+        if r.get("category"):
+            result += f" {r['category']}"
+        result += "\n"
+    return result if all_records else "還沒記錄～"
 
 def get_categories():
-    """取得分類列表"""
-    return "📂 可用分類：\n\n" + "\n".join(CATEGORIES)
+    return "📂 分類\n\n" + "\n".join(CATEGORIES)
+
+def clear_records():
+    save_data({"income": [], "expense": [], "balance": 0})
+    return "🗑️ 已清除"
