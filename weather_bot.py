@@ -10,6 +10,7 @@ import os
 import weather
 import news as news_module
 import stock
+import ledger
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "8789469759:AAGIeXhWe9FrG7218TUEvVfK4-I2Z34dg0o")
 API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
@@ -87,6 +88,12 @@ def send_menu(chat_id):
 📈 股市 - 2330股價
 📊 熱門股票 - Top 10
 📉 評價 2330 - 本益比/殖利率
+
+💰 記帳 - 收支記錄
+💵 收入 500 - 記錄收入
+💸 支出 300 餐飲 - 記錄支出
+📊 餘額 - 查看餘額
+📝 記錄 - 查看記錄
 
 🌐 翻譯 hello - 中英翻譯
 💬 聊天 - AI對話
@@ -167,6 +174,46 @@ while True:
                     
                     elif "股市新聞" in text:
                         send_message(chat_id, stock.get_stock_news())
+                    
+                    # 記帳功能
+                    elif "收入" in text or "+" in text:
+                        import re
+                        match = re.search(r'(\d+)', text)
+                        if match:
+                            amount = int(match.group(1))
+                            note = text.replace("收入", "").replace("+", "").replace(str(amount), "").strip()
+                            send_message(chat_id, ledger.add_income(amount, note))
+                        else:
+                            send_message(chat_id, "📝 格式：收入 500 或 +500")
+                    
+                    elif "支出" in text or "-" in text:
+                        import re
+                        match = re.search(r'(\d+)', text)
+                        if match:
+                            amount = int(match.group(1))
+                            # 嘗試找分類
+                            cats = ["餐飲", "交通", "購物", "娛樂", "醫療", "房租", "投資", "其他"]
+                            category = "其他"
+                            for cat in cats:
+                                if cat in text:
+                                    category = cat
+                                    break
+                            note = text
+                            for cat in cats:
+                                note = note.replace(cat, "")
+                            note = re.sub(r'\d+', '', note).replace("支出", "").replace("-", "").strip()
+                            send_message(chat_id, ledger.add_expense(amount, category, note))
+                        else:
+                            send_message(chat_id, "📝 格式：支出 300 餐飲")
+                    
+                    elif "餘額" in text or "帳本" in text:
+                        send_message(chat_id, ledger.get_balance())
+                    
+                    elif "記錄" in text:
+                        send_message(chat_id, ledger.get_records())
+                    
+                    elif "清除" in text:
+                        send_message(chat_id, ledger.clear_records())
                     
                     # AI 對話
                     else:
